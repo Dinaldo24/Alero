@@ -1,0 +1,49 @@
+<UserControl x:Class="Alero.Pages.SoundPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:a="clr-namespace:Alero">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="176"/>
+            <ColumnDefinition Width="20"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Volumen general y salida -->
+        <StackPanel VerticalAlignment="Center">
+            <Grid>
+                <StackPanel>
+                    <TextBlock Text="VOLUMEN GENERAL" Style="{StaticResource Label}"/>
+                    <TextBlock x:Name="Percent" FontSize="36" FontWeight="Light" FontFamily="{StaticResource Display}" Margin="-2,-4,0,0"/>
+                </StackPanel>
+                <Button x:Name="MuteBtn" Style="{StaticResource IconBtn}" Width="36" Height="36" FontSize="16"
+                        HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-4,4" Click="Mute_Click"/>
+            </Grid>
+            <a:Meter x:Name="Master" Height="20" BarHeight="6" Cursor="Hand" Fill="{DynamicResource Accent}" Track="{StaticResource Track}"/>
+            <Button Style="{StaticResource PillBtn}" Padding="10,6" Margin="0,8,0,0" HorizontalContentAlignment="Left" Click="Device_Click">
+                <StackPanel>
+                    <TextBlock Text="SALIDA · clic para cambiar" Foreground="{StaticResource Mist}" FontSize="9.5" FontWeight="SemiBold"/>
+                    <TextBlock x:Name="DeviceText" FontSize="11.5" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Width="152"/>
+                </StackPanel>
+            </Button>
+        </StackPanel>
+
+        <!-- Volumen de cada aplicación -->
+        <Grid Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="18"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            <TextBlock Text="APLICACIONES" Style="{StaticResource Label}" VerticalAlignment="Top"/>
+            <TextBlock Text="Ajustes de sonido" Foreground="{DynamicResource Accent}" FontSize="11" FontWeight="SemiBold"
+                       HorizontalAlignment="Right" VerticalAlignment="Top" Cursor="Hand" Background="Transparent"
+                       MouseLeftButtonUp="Settings_Click"/>
+            <ScrollViewer Grid.Row="1" Margin="0,2,0,-8" VerticalScrollBarVisibility="Hidden" Focusable="False">
+                <StackPanel x:Name="Apps"/>
+            </ScrollViewer>
+            <TextBlock x:Name="AppsEmpty" Grid.Row="1" Text="Ninguna aplicación está usando el sonido ahora"
+                       Foreground="{StaticResource Mist}" FontSize="11.5" TextWrapping="Wrap" TextAlignment="Center"
+                       VerticalAlignment="Center" Margin="10,0" Visibility="Collapsed"/>
+        </Grid>
+    </Grid>
+</UserControl>
