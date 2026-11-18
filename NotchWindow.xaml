@@ -1,0 +1,126 @@
+﻿<Window x:Class="Alero.NotchWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:a="clr-namespace:Alero"
+        xmlns:p="clr-namespace:Alero.Pages"
+        Title="Alero" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowInTaskbar="False" Topmost="True" ResizeMode="NoResize" ShowActivated="False"
+        Width="720" Height="240" UseLayoutRounding="True"
+        FontFamily="{StaticResource Text}" FontSize="13"
+        Foreground="{StaticResource Ink}">
+    <!-- Todo lo transparente deja pasar los clics: solo la forma negra recibe el ratón. -->
+    <Grid x:Name="Stage">
+        <Grid x:Name="Root" HorizontalAlignment="Center" VerticalAlignment="Top">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- Esquinas cóncavas que unen el notch con el borde de la pantalla -->
+            <Path x:Name="EarL" Grid.Column="0" Data="M0,0 L10,0 L10,10 A10,10 0 0 0 0,0 Z" Fill="Black"
+                  VerticalAlignment="Top" Margin="0,0,-1,0"/>
+            <Path x:Name="EarR" Grid.Column="2" Data="M10,0 L0,0 L0,10 A10,10 0 0 1 10,0 Z" Fill="Black"
+                  VerticalAlignment="Top" Margin="-1,0,0,0"/>
+
+            <Border x:Name="Shell" Grid.Column="1" Width="160" Height="32" Background="Black"
+                    CornerRadius="0,0,14,14" ClipToBounds="True" AllowDrop="True" VerticalAlignment="Top">
+                <Grid>
+                    <!-- Cerrado: reloj o actividad en curso -->
+                    <Grid x:Name="ClosedView" Height="32" VerticalAlignment="Top">
+                        <TextBlock x:Name="ClockText" FontWeight="SemiBold" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        <Grid x:Name="LiveView" Visibility="Collapsed" Margin="12,0,14,0">
+                            <Border x:Name="LiveArt" Width="20" Height="20" CornerRadius="6" Background="{StaticResource Card}"
+                                    HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <TextBlock x:Name="LiveGlyph" FontFamily="{StaticResource Icons}" FontSize="11"
+                                           Foreground="{DynamicResource Accent}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <TextBlock x:Name="LiveText" FontWeight="SemiBold" Foreground="{DynamicResource Accent}"
+                                       HorizontalAlignment="Right" VerticalAlignment="Center"/>
+                            <StackPanel x:Name="LiveBars" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" Height="14">
+                                <Rectangle Width="3" Height="7" RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,2.5,0"/>
+                                <Rectangle Width="3" Height="14" RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,2.5,0"/>
+                                <Rectangle Width="3" Height="10" RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource Accent}" VerticalAlignment="Center" Margin="0,0,2.5,0"/>
+                                <Rectangle Width="3" Height="5" RadiusX="1.5" RadiusY="1.5" Fill="{DynamicResource Accent}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Aviso breve -->
+                    <Grid x:Name="PillView" Visibility="Collapsed" Opacity="0" Width="340" Height="62"
+                          HorizontalAlignment="Center" VerticalAlignment="Top">
+                        <Grid Margin="14,0,18,0" VerticalAlignment="Center">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="PillIcon" Width="36" Height="36" CornerRadius="11" Background="{StaticResource Card}">
+                                <TextBlock x:Name="PillGlyph" FontFamily="{StaticResource Icons}" FontSize="16"
+                                           Foreground="{DynamicResource Accent}"
+                                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            </Border>
+                            <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                                <TextBlock x:Name="PillTitle" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                                <TextBlock x:Name="PillSub" FontSize="11.5" Foreground="{StaticResource Mist}"
+                                           TextTrimming="CharacterEllipsis" Margin="0,1,0,0"/>
+                                <a:Meter x:Name="PillBar" Height="4" Margin="0,8,0,1" Visibility="Collapsed"
+                                         Fill="{DynamicResource Accent}" Track="{StaticResource Track}"/>
+                            </StackPanel>
+                            <TextBlock x:Name="PillRight" Grid.Column="2" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        </Grid>
+                    </Grid>
+
+                    <!-- Abierto: las cuatro opciones + su página -->
+                    <Grid x:Name="OpenView" Visibility="Collapsed" Opacity="0" Width="540" Height="204"
+                          HorizontalAlignment="Center" VerticalAlignment="Top">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="40"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <StackPanel x:Name="Tabs" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                            <Button Style="{StaticResource TabBtn}" Tag="Player" Click="Tab_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8D6;" Style="{StaticResource TabIcon}"/>
+                                    <TextBlock Text="Reproductor" Style="{StaticResource TabLabel}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource TabBtn}" Tag="Trash" Click="Tab_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE74D;" Style="{StaticResource TabIcon}"/>
+                                    <TextBlock Text="Borrar" Style="{StaticResource TabLabel}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource TabBtn}" Tag="Sound" Click="Tab_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE767;" Style="{StaticResource TabIcon}"/>
+                                    <TextBlock Text="Volumen" Style="{StaticResource TabLabel}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource TabBtn}" Tag="Time" Click="Tab_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE916;" Style="{StaticResource TabIcon}"/>
+                                    <TextBlock Text="Tiempo" Style="{StaticResource TabLabel}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource TabBtn}" Tag="Clipboard" Click="Tab_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE77F;" Style="{StaticResource TabIcon}"/>
+                                    <TextBlock Text="Portapapeles" Style="{StaticResource TabLabel}"/>
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                        <Grid Grid.Row="1" Margin="20,10,20,16">
+                            <p:PlayerPage x:Name="PlayerView"/>
+                            <p:TrashPage x:Name="TrashView" Visibility="Collapsed"/>
+                            <p:SoundPage x:Name="SoundView" Visibility="Collapsed"/>
+                            <p:TimePage x:Name="TimeView" Visibility="Collapsed"/>
+                            <p:ClipboardPage x:Name="ClipView" Visibility="Collapsed"/>
+                        </Grid>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+    </Grid>
+</Window>

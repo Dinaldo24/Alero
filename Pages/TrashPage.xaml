@@ -1,0 +1,54 @@
+<UserControl x:Class="Alero.Pages.TrashPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="16"/>
+            <ColumnDefinition Width="150"/>
+        </Grid.ColumnDefinitions>
+
+        <!-- Recuadro donde se sueltan los archivos -->
+        <Border x:Name="DropZone" AllowDrop="True" CornerRadius="16" BorderThickness="1.5" Background="#0CFFFFFF">
+            <Border.BorderBrush>
+                <DrawingBrush x:Name="Dashes" Viewport="0,0,8,8" ViewportUnits="Absolute" TileMode="Tile">
+                    <DrawingBrush.Drawing>
+                        <GeometryDrawing x:Name="DashColor" Brush="#66FFFFFF">
+                            <GeometryDrawing.Geometry>
+                                <GeometryGroup>
+                                    <RectangleGeometry Rect="0,0,4,4"/>
+                                    <RectangleGeometry Rect="4,4,4,4"/>
+                                </GeometryGroup>
+                            </GeometryDrawing.Geometry>
+                        </GeometryDrawing>
+                    </DrawingBrush.Drawing>
+                </DrawingBrush>
+            </Border.BorderBrush>
+            <StackPanel VerticalAlignment="Center" IsHitTestVisible="False">
+                <TextBlock x:Name="ZoneIcon" Text="&#xE74D;" FontFamily="{StaticResource Icons}" FontSize="24"
+                           Foreground="{StaticResource Mist}" HorizontalAlignment="Center"/>
+                <TextBlock x:Name="ZoneTitle" Text="Arrastra aquí para borrar" FontWeight="SemiBold"
+                           HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                <TextBlock x:Name="ZoneSub" Text="Va a la Papelera: se puede recuperar" Foreground="{StaticResource Mist}"
+                           FontSize="11" HorizontalAlignment="Center" Margin="0,2,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Estado de la Papelera -->
+        <StackPanel Grid.Column="2" VerticalAlignment="Center">
+            <TextBlock Text="PAPELERA" Style="{StaticResource Label}"/>
+            <TextBlock x:Name="CountText" FontSize="15" FontWeight="SemiBold" Margin="0,3,0,0"/>
+            <TextBlock x:Name="SizeText" Foreground="{StaticResource Mist}" FontSize="11.5" Margin="0,1,0,0"/>
+            <Grid Margin="0,12,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="6"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Button x:Name="EmptyBtn" Style="{StaticResource PillBtn}" Content="Vaciar" FontSize="11.5" Padding="4,8" Click="Empty_Click"/>
+                <Button Grid.Column="2" Style="{StaticResource PillBtn}" Content="Abrir" FontSize="11.5" Padding="4,8"
+                        Foreground="{StaticResource Mist}" Click="Open_Click"/>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</UserControl>
