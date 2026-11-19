@@ -11,7 +11,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AssemblyName>Alero</AssemblyName>
     <RootNamespace>Alero</RootNamespace>
-    <Version>0.3.1</Version>
+    <Version>0.5.0</Version>
     <ApplicationIcon>alero.ico</ApplicationIcon>
     <SatelliteResourceLanguages>es</SatelliteResourceLanguages>
     <!-- La app es WPF: el modo de PPP se declara en app.manifest, no con la API de WinForms -->
