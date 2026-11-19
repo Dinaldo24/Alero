@@ -1,6 +1,8 @@
 # Alero
 
-Un notch / isla para Windows, gratis y sin cuentas. Nada sale de tu equipo.
+**Alero** es una isla dinámica (*Dynamic Island*) y notch para Windows 10 y 11, gratis y sin cuentas.
+Vive en el borde superior de la pantalla, se abre al pasar el mouse y controla tu música, el volumen,
+el portapapeles y un temporizador sin salir de lo que estás haciendo. Nada sale de tu equipo.
 
 Opciones: **Reproductor** (lo que suena, con controles), **Volumen** (general, por aplicación y salida),
 **Portapapeles** (últimas 10 imágenes y 10 textos), **Borrar** (arrastra archivos y van a la Papelera)
