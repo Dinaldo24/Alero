@@ -107,8 +107,6 @@ public partial class App : Application
             colors.DropDownItems.Add(item);
         }
 
-        var resetOrder = new WF.ToolStripMenuItem("Restablecer orden del menú");
-        resetOrder.Click += (_, _) => _win?.ResetTabOrder();
 
         var about = new WF.ToolStripMenuItem("Acerca de Alero");
         about.Click += (_, _) => MessageBox.Show(
@@ -125,7 +123,7 @@ public partial class App : Application
         var exit = new WF.ToolStripMenuItem("Salir");
         exit.Click += (_, _) => Shutdown();
 
-        menu.Items.AddRange(new WF.ToolStripItem[] { start, always, minimal, colors, resetOrder, new WF.ToolStripSeparator(), about, exit });
+        menu.Items.AddRange(new WF.ToolStripItem[] { start, always, minimal, colors, new WF.ToolStripSeparator(), about, exit });
 
         // El menú se coloca a mano (sin ContextMenuStrip del icono): con varios monitores y la barra
         // en un lateral, el automático acababa en el otro monitor.

@@ -27,8 +27,13 @@ public static class Autostart
         {
             using var k = Registry.CurrentUser.OpenSubKey(RunKey, writable: true);
             if (k == null) return;
-            if (on && Environment.ProcessPath is { } exe) k.SetValue(Name, $"\"{exe}\"");
-            else k.DeleteValue(Name, throwOnMissingValue: false);
+            using var ok = Registry.CurrentUser.CreateSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartupApproved\Run");
+            if (on && Environment.ProcessPath is { } exe)
+            {
+                k.SetValue(Name, $"\"{exe}\"");
+                ok.SetValue(Name, new byte[12] { 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, RegistryValueKind.Binary); // "Habilitado" en el Administrador de tareas
+            }
+            else { k.DeleteValue(Name, throwOnMissingValue: false); ok.DeleteValue(Name, throwOnMissingValue: false); }
         }
         catch { }
     }

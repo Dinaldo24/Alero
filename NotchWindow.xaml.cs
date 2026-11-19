@@ -24,7 +24,10 @@ public partial class NotchWindow : Window
     public readonly ClipboardService Clips = new();
 
     /// <summary>True mientras se arrastra una imagen fuera del notch (no debe cerrarse a mitad del arrastre).</summary>
+    bool _appInFront;
     public bool Dragging;
+    /// <summary>Imagen del historial que se está arrastrando (solo ella puede soltarse en "Borrar").</summary>
+    public ClipImage? DraggedClip;
 
     static readonly DependencyProperty RadiusProperty = DependencyProperty.Register(
         "Radius", typeof(double), typeof(NotchWindow),
@@ -39,8 +42,8 @@ public partial class NotchWindow : Window
     int _tick, _lastMinute = -1;
     WF.PowerLineStatus _lastPower = WF.SystemInformation.PowerStatus.PowerLineStatus;
 
-    readonly DispatcherTimer _openTimer = new() { Interval = TimeSpan.FromMilliseconds(70) };
-    readonly DispatcherTimer _closeTimer = new() { Interval = TimeSpan.FromMilliseconds(320) };
+    readonly DispatcherTimer _openTimer = new() { Interval = TimeSpan.FromMilliseconds(30) };
+    readonly DispatcherTimer _closeTimer = new() { Interval = TimeSpan.FromMilliseconds(140) };
     readonly DispatcherTimer _pillTimer = new();
     readonly DispatcherTimer _house = new() { Interval = TimeSpan.FromMilliseconds(500) };
 
@@ -62,11 +65,13 @@ public partial class NotchWindow : Window
 
         Shell.MouseEnter += (_, _) => { if (App.SnapshotMode) return; _closeTimer.Stop(); _openTimer.Start(); };
         Shell.MouseLeave += (_, _) => { if (App.SnapshotMode) return; _openTimer.Stop(); ScheduleClose(); };
-        _openTimer.Tick += (_, _) => { _openTimer.Stop(); if (Shell.IsMouseOver) Open(); };
+        HoverStrip.MouseEnter += (_, _) => { if (!App.SnapshotMode) { _closeTimer.Stop(); _openTimer.Start(); } };
+        HoverStrip.MouseLeave += (_, _) => { if (!App.SnapshotMode) _openTimer.Stop(); };
+        _openTimer.Tick += (_, _) => { _openTimer.Stop(); if (Shell.IsMouseOver || HoverStrip.IsMouseOver) Open(); };
         _closeTimer.Tick += (_, _) =>
         {
             _closeTimer.Stop();
-            if (Shell.IsMouseOver || _dragOver || Dragging || Typing) return;
+            if (CursorInside() || _dragOver || Dragging || Typing) return;
             Collapse();
         };
         _pillTimer.Tick += (_, _) => { _pillTimer.Stop(); if (_mode == Mode.Pill) SetMode(Mode.Closed); };
@@ -97,11 +102,41 @@ public partial class NotchWindow : Window
             ShowPill(muted ? IconMute : IconVolume, "Volumen", null, muted ? 0 : level, muted ? "Silencio" : $"{level * 100:0}%", 1700);
         };
         _house.Tick += (_, _) => House();
+        // Con una aplicación maximizada (navegador, etc.) el notch se queda mínimo; en el escritorio, normal.
+        var front = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(150) };
+        front.Tick += (_, _) =>
+        {
+            bool f = Native.IsForegroundMaximized(_hwnd);
+            if (f != _appInFront) { _appInFront = f; RefreshLayout(); }
+        };
+        Loaded += (_, _) => { if (!App.SnapshotMode) front.Start(); };
+
+        // Con una app maximizada, los eventos de ratón de WPF fallan en el borde superior de la pantalla.
+        // Se consulta el cursor directamente: si está en la franja del notch, se abre.
+        int dwell = 0;
+        var edge = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(40) };
+        edge.Tick += (_, _) =>
+        {
+            if (_hiddenForFullscreen || !Native.TryGetCursor(out var c)) { dwell = 0; return; }
+            double s = VisualTreeHelper.GetDpi(this).DpiScaleX;
+            double cx = (Left + Width / 2) * s, half = 90 * s;
+            if (_mode == Mode.Open)
+            {
+                // Cierre fiable: si el cursor salió del notch abierto, se cierra aunque WPF no avise.
+                bool outside = c.Y > (204 + 8) * s || Math.Abs(c.X - cx) > (270 + 8) * s;
+                if (outside && !_dragOver && !Dragging && !Typing && !_closeTimer.IsEnabled) ScheduleClose();
+                dwell = 0;
+                return;
+            }
+            if (_mode != Mode.Closed) { dwell = 0; return; }
+            if (c.Y <= 14 * s && Math.Abs(c.X - cx) <= half) { if (++dwell >= 2) { dwell = 0; Open(); ScheduleClose(); } }
+            else dwell = 0;
+        };
+        Loaded += (_, _) => { if (!App.SnapshotMode) edge.Start(); };
 
         Loaded += async (_, _) =>
         {
-            ApplyTabOrder();
-            HookTabDrag();
+            HookClipTrash();
             UpdateClock();
             UpdateClosed();
             SelectTab(Tab.Player);
@@ -127,87 +162,23 @@ public partial class NotchWindow : Window
         Closed += (_, _) => { if (_hwnd != IntPtr.Zero) Native.RemoveClipboardFormatListener(_hwnd); };
     }
 
-    // ---- Orden de las opciones: se arrastran con el ratón -------------------------------------
-
-    Button? _dragTab;
-    Point _dragStart;
-    bool _dragMoved;
-
-    void ApplyTabOrder()
+    void HookClipTrash()
     {
-        var order = Store.Data.TabOrder;
-        var buttons = Tabs.Children.Cast<Button>().ToList();
-        var sorted = buttons.OrderBy(b => { int i = order.IndexOf((string)b.Tag); return i < 0 ? 1000 + buttons.IndexOf(b) : i; }).ToList();
-        Tabs.Children.Clear();
-        foreach (var b in sorted) Tabs.Children.Add(b);
-    }
-
-    void HookTabDrag()
-    {
-        foreach (Button b in Tabs.Children)
+        var btn = Tabs.Children.Cast<Button>().First(b => (string)b.Tag == "Trash");
+        btn.AllowDrop = true;
+        btn.DragOver += (_, e) =>
         {
-            b.PreviewMouseLeftButtonDown += (s, e) => { _dragTab = (Button)s; _dragStart = e.GetPosition(Tabs); _dragMoved = false; };
-            b.PreviewMouseMove += TabDragMove;
-            b.PreviewMouseLeftButtonUp += (s, e) =>
-            {
-                if (_dragTab != s) return;
-                bool moved = _dragMoved;
-                _dragTab = null; _dragMoved = false;
-                if (!moved) return;
-                var btn = (Button)s;
-                btn.ReleaseMouseCapture(); btn.Opacity = 1;
-                SaveTabOrder();
-                e.Handled = true; // fue un arrastre, no un clic para cambiar de opción
-            };
-        }
-    }
-
-    void TabDragMove(object sender, MouseEventArgs e)
-    {
-        if (_dragTab != sender || e.LeftButton != MouseButtonState.Pressed) return;
-        var p = e.GetPosition(Tabs);
-        if (!_dragMoved)
+            e.Handled = true;
+            bool ok = DraggedClip != null;
+            e.Effects = ok ? DragDropEffects.Move : DragDropEffects.None;
+            btn.Opacity = ok ? 0.6 : 1;
+        };
+        btn.DragLeave += (_, _) => btn.Opacity = 1;
+        btn.Drop += (_, e) =>
         {
-            if (Math.Abs(p.X - _dragStart.X) < 8) return;
-            _dragMoved = true;
-            _dragTab.CaptureMouse();
-            _dragTab.Opacity = 0.65;
-        }
-        // La opción se coloca después de todas las que quedan a su izquierda.
-        int index = 0;
-        foreach (Button other in Tabs.Children)
-        {
-            if (other == _dragTab) continue;
-            if (other.TranslatePoint(new Point(other.ActualWidth / 2, 0), Tabs).X < p.X) index++;
-        }
-        PlaceTab(_dragTab, index);
-    }
-
-    void PlaceTab(Button b, int index)
-    {
-        int cur = Tabs.Children.IndexOf(b);
-        index = Math.Clamp(index, 0, Tabs.Children.Count - 1);
-        if (cur == index) return;
-        Tabs.Children.Remove(b);
-        Tabs.Children.Insert(index, b);
-        Tabs.UpdateLayout();
-    }
-
-    void SaveTabOrder()
-    {
-        Store.Data.TabOrder = Tabs.Children.Cast<Button>().Select(b => (string)b.Tag).ToList();
-        Store.Save();
-    }
-
-    /// <summary>Restablece el orden original (lo llama la bandeja).</summary>
-    public void ResetTabOrder()
-    {
-        Store.Data.TabOrder = new();
-        Store.Save();
-        string[] original = { "Player", "Trash", "Sound", "Time", "Clipboard" };
-        var buttons = Tabs.Children.Cast<Button>().OrderBy(b => Array.IndexOf(original, (string)b.Tag)).ToList();
-        Tabs.Children.Clear();
-        foreach (var b in buttons) Tabs.Children.Add(b);
+            e.Handled = true; btn.Opacity = 1;
+            if (DraggedClip is { } img) { var d = img; DraggedClip = null; Dispatcher.BeginInvoke(() => Clips.Remove(d)); }
+        };
     }
 
     /// <summary>Mientras se escribe en un cuadro, el notch sí puede recibir el teclado.</summary>
@@ -270,6 +241,14 @@ public partial class NotchWindow : Window
         SetMode(Mode.Open);
     }
 
+    bool CursorInside()
+    {
+        if (!Native.TryGetCursor(out var c)) return Shell.IsMouseOver;
+        double s = VisualTreeHelper.GetDpi(this).DpiScaleX;
+        double cx = (Left + Width / 2) * s;
+        return c.Y <= (204 + 8) * s && Math.Abs(c.X - cx) <= (270 + 8) * s;
+    }
+
     void Collapse() { if (_mode == Mode.Open) SetMode(Mode.Closed); }
 
     public void ScheduleClose() { _closeTimer.Stop(); _closeTimer.Start(); }
@@ -313,7 +292,7 @@ public partial class NotchWindow : Window
         {
             el.Visibility = Visibility.Visible;
             el.IsHitTestVisible = true;
-            el.Anim(OpacityProperty, 1, 240, Ui.Smooth, delayMs: 90);
+            el.Anim(OpacityProperty, 1, 240, Ui.Smooth, delayMs: 30);
         }
         else
         {
@@ -337,7 +316,7 @@ public partial class NotchWindow : Window
                 w = 340; h = 62; r = 22;
                 break;
             default:
-                minimal = Store.Data.MinimalNotch;
+                minimal = Store.Data.MinimalNotch || _appInFront;
                 if (minimal) { w = 150; h = 5; r = 3; }
                 else { w = HasLive ? 236 : 160; h = 32; r = 14; }
                 break;
@@ -347,8 +326,9 @@ public partial class NotchWindow : Window
         bool grow = w > _targetW || h > _targetH;
         _targetW = w; _targetH = h;
 
+        HoverStrip.Visibility = minimal ? Visibility.Visible : Visibility.Collapsed;
         EarL.Visibility = EarR.Visibility = minimal ? Visibility.Collapsed : Visibility.Visible;
-        int ms = grow ? 520 : 360;
+        int ms = grow ? 300 : 220;
         var ease = grow ? Ui.Spring : Ui.Smooth;
         Shell.Anim(WidthProperty, w, ms, ease);
         Shell.Anim(HeightProperty, h, ms, ease);
@@ -576,12 +556,6 @@ public partial class NotchWindow : Window
             // Más de 10 de cada uno: solo deben quedar 10.
             for (int i = 0; i < 14; i++) Clips.AddText("texto de prueba " + i);
             log.Add($"portapapeles: textos={Clips.Texts.Count} (máx {ClipboardService.Max}) · imágenes={Clips.Images.Count}");
-            // Orden del menú: mover "Volumen" al principio y volver a dejarlo.
-            var vol = Tabs.Children.Cast<Button>().First(b => (string)b.Tag == "Sound");
-            PlaceTab(vol, 0); await Snap("13d-menu-reordenado");
-            log.Add("menú reordenado: " + string.Join(" > ", Tabs.Children.Cast<Button>().Select(b => (string)b.Tag)));
-            ResetTabOrder();
-            log.Add("menú restablecido: " + string.Join(" > ", Tabs.Children.Cast<Button>().Select(b => (string)b.Tag)));
 
             // Papelera: un archivo de prueba debe dejar de existir en su carpeta y aparecer el aviso.
             string victim = Path.Combine(dir, "prueba-para-borrar.txt");

@@ -40,6 +40,9 @@ internal static class Native
     [DllImport("user32.dll")] static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO info);
     [DllImport("user32.dll")] static extern bool SetWindowPos(IntPtr hWnd, IntPtr after, int x, int y, int cx, int cy, uint flags);
     [DllImport("user32.dll")] public static extern short GetKeyState(int vk);
+    [DllImport("user32.dll")] static extern bool GetCursorPos(out POINT p);
+    [StructLayout(LayoutKind.Sequential)] public struct POINT { public int X, Y; }
+    public static bool TryGetCursor(out POINT p) => GetCursorPos(out p);
     [DllImport("user32.dll")] static extern void keybd_event(byte vk, byte scan, uint flags, UIntPtr extra);
 
     public const byte VK_MEDIA_NEXT_TRACK = 0xB0, VK_MEDIA_PREV_TRACK = 0xB1;
@@ -65,6 +68,17 @@ internal static class Native
         SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0010); // NOSIZE | NOMOVE | NOACTIVATE
 
     /// <summary>True si la ventana activa ocupa toda la pantalla principal (juego, video, presentación).</summary>
+    /// <summary>Hay una aplicación maximizada delante (no el escritorio ni la barra de tareas).</summary>
+    public static bool IsForegroundMaximized(IntPtr self)
+    {
+        var fg = GetForegroundWindow();
+        if (fg == IntPtr.Zero || fg == self || fg == GetDesktopWindow() || fg == GetShellWindow()) return false;
+        var sb = new StringBuilder(64);
+        GetClassName(fg, sb, sb.Capacity);
+        if (sb.ToString() is "Progman" or "WorkerW" or "Shell_TrayWnd" or "XamlExplorerHostIslandWindow") return false;
+        return (GetWindowLongPtr(fg, GWL_STYLE).ToInt64() & WS_MAXIMIZE) != 0;
+    }
+
     public static bool IsForegroundFullscreen(IntPtr self)
     {
         var fg = GetForegroundWindow();

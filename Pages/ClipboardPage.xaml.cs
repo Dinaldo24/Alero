@@ -30,10 +30,10 @@ public partial class ClipboardPage : UserControl
         try { data.SetData(DataFormats.FileDrop, new[] { C.ExportToTempFile(img) }); } catch { }   // chats, correo, carpetas
         try { data.SetImage(C.Decode(img)); } catch { }                                           // Paint, Word, editores
         var host = NotchWindow.Instance;
-        host.Dragging = true;
+        host.Dragging = true; host.DraggedClip = img;
         try { DragDrop.DoDragDrop(source, data, DragDropEffects.Copy); }
         catch { }
-        finally { host.Dragging = false; host.ScheduleClose(); }
+        finally { host.Dragging = false; host.DraggedClip = null; host.ScheduleClose(); }
     }
 
     void OnChanged() { if (_active) Refresh(); else UpdateCounts(); }
@@ -113,7 +113,7 @@ public partial class ClipboardPage : UserControl
                 var p = e.GetPosition(this);
                 if (Math.Abs(p.X - _pressAt.X) < 6 && Math.Abs(p.Y - _pressAt.Y) < 6) return;
                 _pressed = null;            // empezó un arrastre: ya no cuenta como clic
-                caption.Text = "Suelta donde quieras";
+                caption.Text = "Suelta o arrastra a Borrar";
                 caption.Foreground = Ui.Brush("Accent");
                 DragOut(card, img);
                 caption.Text = $"{Ui.Ago(img.When)} · {img.Width}×{img.Height}";

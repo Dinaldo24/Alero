@@ -23,6 +23,10 @@
             <Path x:Name="EarR" Grid.Column="2" Data="M10,0 L0,0 L0,10 A10,10 0 0 1 10,0 Z" Fill="Black"
                   VerticalAlignment="Top" Margin="-1,0,0,0"/>
 
+            <!-- Zona de activación del notch mínimo: casi invisible, pero recibe el ratón. -->
+            <Border x:Name="HoverStrip" Grid.Column="1" Width="150" Height="16" Background="#01000000"
+                    VerticalAlignment="Top" Visibility="Collapsed" Panel.ZIndex="5"/>
+
             <Border x:Name="Shell" Grid.Column="1" Width="160" Height="32" Background="Black"
                     CornerRadius="0,0,14,14" ClipToBounds="True" AllowDrop="True" VerticalAlignment="Top">
                 <Grid>
@@ -86,28 +90,28 @@
                                     <TextBlock Text="Reproductor" Style="{StaticResource TabLabel}"/>
                                 </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource TabBtn}" Tag="Trash" Click="Tab_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE74D;" Style="{StaticResource TabIcon}"/>
-                                    <TextBlock Text="Borrar" Style="{StaticResource TabLabel}"/>
-                                </StackPanel>
-                            </Button>
                             <Button Style="{StaticResource TabBtn}" Tag="Sound" Click="Tab_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE767;" Style="{StaticResource TabIcon}"/>
                                     <TextBlock Text="Volumen" Style="{StaticResource TabLabel}"/>
                                 </StackPanel>
                             </Button>
-                            <Button Style="{StaticResource TabBtn}" Tag="Time" Click="Tab_Click">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="&#xE916;" Style="{StaticResource TabIcon}"/>
-                                    <TextBlock Text="Tiempo" Style="{StaticResource TabLabel}"/>
-                                </StackPanel>
-                            </Button>
                             <Button Style="{StaticResource TabBtn}" Tag="Clipboard" Click="Tab_Click">
                                 <StackPanel Orientation="Horizontal">
                                     <TextBlock Text="&#xE77F;" Style="{StaticResource TabIcon}"/>
                                     <TextBlock Text="Portapapeles" Style="{StaticResource TabLabel}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource TabBtn}" Tag="Trash" Click="Tab_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE74D;" Style="{StaticResource TabIcon}"/>
+                                    <TextBlock Text="Borrar" Style="{StaticResource TabLabel}"/>
+                                </StackPanel>
+                            </Button>
+                            <Button Style="{StaticResource TabBtn}" Tag="Time" Click="Tab_Click">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE916;" Style="{StaticResource TabIcon}"/>
+                                    <TextBlock Text="Tiempo" Style="{StaticResource TabLabel}"/>
                                 </StackPanel>
                             </Button>
                         </StackPanel>
