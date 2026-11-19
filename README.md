@@ -9,6 +9,15 @@ Opciones: **Reproductor** (lo que suena, con controles), **Volumen** (general, p
 y **Tiempo** (cronómetro y temporizador). Las opciones se reordenan arrastrándolas, y el color de
 resalte se cambia desde el menú del icono de la bandeja (Color).
 
+<p align="center">
+  <img src="docs/cerrado.png" width="48%" alt="Alero cerrado con música">
+  <img src="docs/aviso-volumen.png" width="48%" alt="Aviso de volumen">
+  <img src="docs/reproductor.png" width="48%" alt="Reproductor">
+  <img src="docs/tiempo.png" width="48%" alt="Temporizador">
+  <img src="docs/portapapeles.png" width="48%" alt="Portapapeles">
+  <img src="docs/borrar.png" width="48%" alt="Borrar">
+</p>
+
 ## Instalar
 
 1. Instala el [.NET 10 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/10.0).
